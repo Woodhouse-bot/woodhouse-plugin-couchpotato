@@ -1,0 +1,102 @@
+var http = require('http');
+
+var couchpotato = function(){
+    this.name = 'couchpotato';
+    this.displayname = 'CouchPotato';
+    this.description = 'Send commands to CouchPotato';
+
+    this.defaultPrefs = [{
+        name: 'hostname',
+        type: 'text',
+        value: 'localhost'
+    },{
+        name: 'port',
+        type: 'text',
+        value: '5050'
+    },{
+        name: 'api_key',
+        type: 'text',
+        value: ''
+    }];
+}
+
+couchpotato.prototype.init = function(){
+    var self = this;
+
+    this.listen('couchpotato add (.+?)', 'standard', function(from, interface, params){
+        self.findMovie(params[0], interface, from)
+    });
+}
+
+couchpotato.prototype.findMovie = function(name, interface, from){
+    var self = this;
+    this.getPrefs().done(function(prefs){
+        var options = {
+            hostname: prefs.hostname,
+            port: prefs.port,
+            path: '/api/'+prefs.api_key+'/search/?q='+encodeURIComponent(name),
+            headers: {
+                'user-agent': 'Woodhouse Bot - https://github.com/Woodhouse-bot/woodhouse'
+            }
+        };
+        var data = "";
+
+        var req = http.get(options, function(res) {
+            res.on('data', function (response) {
+                data += String(response);
+            });
+
+            res.on('end', function() {
+                var obj = JSON.parse(data);
+                var movies = obj.movies;
+
+                self.checkMovie(movies, interface, from);
+            });
+        }).on('error', function(e) {
+            console.log('problem with request: ' + e.message);
+        });
+    });
+}
+
+couchpotato.prototype.checkMovie = function(movies, interface, from){
+    var self = this;
+    var movie = movies.shift();
+    var message = 'Did you mean: ' + movie.titles[0] + ' (' + movie.year + ') - http://www.imdb.com/title/' + movie.imdb;
+
+    this.sendMessage(message, interface, from);
+    this.api.addYesNoQuestion(
+        message,
+        function(){
+            self.addMovie(movie, interface, from);
+        },
+        function(){
+            self.checkMovie(movies, interface, from)
+        })
+}
+
+couchpotato.prototype.addMovie = function(movie, interface, from){
+    var self = this;
+    this.getPrefs().done(function(prefs){
+        var options = {
+            hostname: prefs.hostname,
+            port: prefs.port,
+            path: '/api/'+prefs.api_key+'/movie.add/?identifier='+movie.imdb+'&title='+encodeURIComponent(movie.titles[0]),
+            headers: {
+                'user-agent': 'Woodhouse Bot - https://github.com/Woodhouse-bot/woodhouse'
+            }
+        };
+
+        var req = http.get(options, function(res) {
+            res.on('data', function (response) {
+            });
+
+            res.on('end', function() {
+                self.sendMessage(movie.titles[0] + ' added', interface, from);
+            });
+        }).on('error', function(e) {
+            console.log('problem with request: ' + e.message);
+        });
+    });
+}
+
+module.exports = couchpotato;
