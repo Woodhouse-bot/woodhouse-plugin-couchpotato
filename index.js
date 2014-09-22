@@ -84,14 +84,23 @@ couchpotato.prototype.addMovie = function(movie, interface, from){
             headers: {
                 'user-agent': 'Woodhouse Bot - https://github.com/Woodhouse-bot/woodhouse'
             }
-        };
+        },
+        data = '';
 
         var req = http.get(options, function(res) {
             res.on('data', function (response) {
+                data += response;
             });
 
             res.on('end', function() {
-                self.sendMessage(movie.titles[0] + ' added', interface, from);
+                var obj = JSON.parse(data);
+
+                if (obj.success === 'true') {
+                    self.sendMessage(movie.titles[0] + ' added', interface, from);
+                } else {
+                    self.sendMessage('There was an error, please check the CouchPotato logs', interface, from);
+                }
+
             });
         }).on('error', function(e) {
             console.log('problem with request: ' + e.message);
