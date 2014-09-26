@@ -65,6 +65,7 @@ couchpotato.prototype.checkMovie = function(movies, interface, from){
 
     this.sendMessage(message, interface, from);
     this.api.addYesNoQuestion(
+        from,
         message,
         function(){
             self.addMovie(movie, interface, from);
