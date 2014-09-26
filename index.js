@@ -60,19 +60,25 @@ couchpotato.prototype.findMovie = function(name, interface, from){
 
 couchpotato.prototype.checkMovie = function(movies, interface, from){
     var self = this;
-    var movie = movies.shift();
-    var message = 'Did you mean: ' + movie.titles[0] + ' (' + movie.year + ') - http://www.imdb.com/title/' + movie.imdb;
 
-    this.sendMessage(message, interface, from);
-    this.api.addYesNoQuestion(
-        from,
-        message,
-        function(){
-            self.addMovie(movie, interface, from);
-        },
-        function(){
-            self.checkMovie(movies, interface, from)
-        })
+    if (movies.length > 0){
+        var movie = movies.shift();
+        var message = 'Did you mean: ' + movie.titles[0] + ' (' + movie.year + ') - http://www.imdb.com/title/' + movie.imdb;
+
+        this.sendMessage(message, interface, from);
+        this.api.addYesNoQuestion(
+            from,
+            message,
+            function(){
+                self.addMovie(movie, interface, from);
+            },
+            function(){
+                self.checkMovie(movies, interface, from)
+            }
+        );
+    } else {
+        this.sendMessage('No more results', interface, from);
+    }
 }
 
 couchpotato.prototype.addMovie = function(movie, interface, from){
