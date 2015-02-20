@@ -23,7 +23,7 @@ var couchpotato = function(){
 couchpotato.prototype.init = function(){
     var self = this;
 
-    this.listen('couchpotato add (.+?)', 'standard', function(from, interface, params){
+    this.listen('couchpotato add (:<movie>.+?)', 'standard', function(from, interface, params){
         self.findMovie(params[0], interface, from)
     });
 }
