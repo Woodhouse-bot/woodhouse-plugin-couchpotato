@@ -66,7 +66,7 @@ couchpotato.prototype.checkMovie = function(movies, interface, from){
         var message = 'Did you mean: ' + movie.titles[0] + ' (' + movie.year + ') - http://www.imdb.com/title/' + movie.imdb;
 
         this.sendMessage(message, interface, from);
-        this.api.addYesNoQuestion(
+        this.api.yesNo.addYesNoQuestion(
             from,
             message,
             function(){
